@@ -11,7 +11,8 @@ pipeline {
     REPO = 'poc-bump-automation'
     HOME = "${env.WORKSPACE}"
     NOTIFY_TO = credentials('notify-to')
-    PIPELINE_LOG_LEVEL='INFO'
+    PIPELINE_LOG_LEVEL='DEBUG'
+    HUB_VERBOSE = '1'
   }
   options {
     timeout(time: 1, unit: 'HOURS')
@@ -126,7 +127,7 @@ def createPullRequest(Map args = [:]) {
     log(level: 'INFO', text: "DRY-RUN: createPullRequest(repo: ${args.stackVersion}, labels: ${args.labels}, message: '${args.message}')")
     return
   }
-  gh(command: "pr create", flags: [ label: "${args.labels}", title: "${args.title} ${args.stackVersion}", body: "${args.message}"])
+  githubCreatePullRequest(title: "${args.title} ${args.stackVersion}", labels: "${args.labels}", description: "${args.message}")
 }
 
 def prepareContext(Map args = [:]) {
