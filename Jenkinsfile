@@ -148,7 +148,7 @@ def reusePullRequestIfPossible(Map args = [:]){
     pullRequests?.each { k, v ->
       log(level: 'INFO', text: "Reuse #${k} GitHub Pull Request.")
       gh(command: "pr checkout ${k}")
-      gh(command: "pr edit ${k}", flags: [body: "${args.title}" , title: "${args.message}"])
+      gh(command: "pr edit ${k}", flags: [title: "${args.title}", body: "${args.message}"])
     }
     return true
   }
