@@ -126,7 +126,7 @@ def createPullRequest(Map args = [:]) {
     log(level: 'INFO', text: "DRY-RUN: createPullRequest(repo: ${args.stackVersion}, labels: ${args.labels}, message: '${args.message}')")
     return
   }
-  githubCreatePullRequest(title: "${args.title} ${args.stackVersion}", labels: "${args.labels}", description: "${args.message}")
+  gh(command: "pr create", flags: [ label: "${args.labels}", title: "${args.title} ${args.stackVersion}", body: "${args.message}"])
 }
 
 def prepareContext(Map args = [:]) {
@@ -161,12 +161,5 @@ def findBranchName(Map args = [:]){
 }
 
 def createPRDescription(versionEntry) {
-  return """
-  ### What
-  Bump stack version with the latest one.
-  ### Further details
-  ```
-  ${versionEntry.toMapString()}
-  ```
-  """
+  return """### What \n Bump stack version with the latest one. \n ### Further details \n ${versionEntry.toMapString()}"""
 }
