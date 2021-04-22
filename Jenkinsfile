@@ -96,9 +96,6 @@ def prepareArguments(Map args = [:]){
   def message = createPRDescription(versionEntry)
   def stackVersion = versionEntry.build_id
   def title = "bump-stack-version"
-  if (labels.trim()) {
-    labels = "automation,dependency,${labels}"
-  }
   return [reusePullRequest: reusePullRequest, repo: repo, branchName: branchName, title: title, labels: labels, scriptFile: scriptFile, stackVersion: stackVersion, message: message]
 }
 
