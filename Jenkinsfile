@@ -11,7 +11,8 @@ pipeline {
     REPO = 'poc-bump-automation'
     HOME = "${env.WORKSPACE}"
     NOTIFY_TO = credentials('notify-to')
-    PIPELINE_LOG_LEVEL='INFO'
+    PIPELINE_LOG_LEVEL='DEBUG'
+    HUB_VERBOSE = '1'
   }
   options {
     timeout(time: 1, unit: 'HOURS')
@@ -95,8 +96,8 @@ def prepareArguments(Map args = [:]){
   def message = createPRDescription(versionEntry)
   def stackVersion = versionEntry.build_id
   def title = "bump-stack-version"
-  if (labels.trim()) {
-    labels = "automation,dependency,${labels}"
+  if (labels.trim() && !labels.contains('automation')) {
+    labels = "automation,${labels}"
   }
   return [reusePullRequest: reusePullRequest, repo: repo, branchName: branchName, title: title, labels: labels, scriptFile: scriptFile, stackVersion: stackVersion, message: message]
 }
@@ -161,12 +162,5 @@ def findBranchName(Map args = [:]){
 }
 
 def createPRDescription(versionEntry) {
-  return """
-  ### What
-  Bump stack version with the latest one.
-  ### Further details
-  ```
-  ${versionEntry.toMapString()}
-  ```
-  """
+  return """### What \n Bump stack version with the latest one. \n ### Further details \n ${versionEntry.toMapString()}"""
 }
