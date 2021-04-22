@@ -142,7 +142,7 @@ def reusePullRequestIfPossible(Map args = [:]){
   def title = args.title
   def pullRequests = githubPullRequests(labels: args.labels.split(','), titleContains: args.title)
   if (pullRequests && pullRequests.size() == 1) {
-    log(level: 'INFO', text: "Reuse #${k} GitHub Pull Request.")
+    log(level: 'INFO', text: "Reuse GitHub Pull Request.")
     pullRequests?.each { k, v -> gh(command: "pr checkout ${k}") }
     return true
   }
