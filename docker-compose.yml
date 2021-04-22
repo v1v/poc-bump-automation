@@ -1,0 +1,61 @@
+version: '2.3'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.0-9118114b-SNAPSHOT
+    ports:
+      - 9200:9200
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=500ms"]
+      retries: 300
+      interval: 1s
+    environment:
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "network.host="
+      - "transport.host=127.0.0.1"
+      - "http.host=0.0.0.0"
+      - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "discovery.type=single-node"
+      - "xpack.security.authc.anonymous.roles=remote_monitoring_collector"
+      - "xpack.security.authc.realms.file.file1.order=0"
+      - "xpack.security.authc.realms.native.native1.order=1"
+      - "xpack.security.enabled=true"
+      - "xpack.license.self_generated.type=trial"
+      - "xpack.security.authc.token.enabled=true"
+      - "xpack.security.authc.api_key.enabled=true"
+      - "logger.org.elasticsearch=${ES_LOG_LEVEL:-error}"
+      - "action.destructive_requires_name=false"
+    volumes:
+      - "./testing/docker/elasticsearch/roles.yml:/usr/share/elasticsearch/config/roles.yml"
+      - "./testing/docker/elasticsearch/users:/usr/share/elasticsearch/config/users"
+      - "./testing/docker/elasticsearch/users_roles:/usr/share/elasticsearch/config/users_roles"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.0.0-9118114b-SNAPSHOT
+    ports:
+      - 5601:5601
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q 'Looking good'"]
+      retries: 300
+      interval: 1s
+    environment:
+      STATUS_ALLOWANONYMOUS: "true"
+      ELASTICSEARCH_URL: elasticsearch:9200
+      ELASTICSEARCH_USERNAME: "${KIBANA_ES_USER:-kibana_system_user}"
+      ELASTICSEARCH_PASSWORD: "${KIBANA_ES_PASS:-changeme}"
+      XPACK_XPACK_MAIN_TELEMETRY_ENABLED: "false"
+      XPACK_SECURITY_ENCRYPTIONKEY: "fhjskloppd678ehkdfdlliverpoolfcr"
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: "fhjskloppd678ehkdfdlliverpoolfcr"
+      XPACK_FLEET_AGENTS_ELASTICSEARCH_HOST: "http://elasticsearch:9200"
+      XPACK_FLEET_AGENTS_TLSCHECKDISABLED: "true"
+      XPACK_FLEET_REGISTRYURL: "http://package-registry:8080"
+    depends_on:
+      elasticsearch: { condition: service_healthy }
+      package-registry: { condition: service_healthy }
+
+  package-registry:
+    image: docker.elastic.co/package-registry/distribution:snapshot
+    ports:
+      - 8080
+    volumes:
+      - "./testing/docker/package-registry/config.yml:/package-registry/config.yml"
+      - "./apmpackage/apm:/packages/local/apm"

@@ -1,0 +1,10 @@
+pull_request_rules:
+  - name: Automatic squash and merge with success checks and the file docker-compose.yml is modified.
+    conditions:
+      - label=automation
+      - label=ready-to-merge
+      - files=docker-compose.yml
+    actions:
+      merge:
+        method: squash
+        strict: smart+fasttrack
