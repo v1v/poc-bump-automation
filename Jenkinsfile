@@ -161,14 +161,12 @@ def findBranchName(Map args = [:]){
 }
 
 def createPRDescription(versionEntry) {
-  def content
-  versionEntry.each{k,v -> content += "${k} : ${v}"}
   return """
   ### What
   Bump stack version with the latest one.
   ### Further details
   ```
-  ${content}
+  ${versionEntry.toMapString()}
   ```
   """
 }
