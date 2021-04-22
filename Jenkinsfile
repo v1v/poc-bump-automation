@@ -126,7 +126,7 @@ def createPullRequest(Map args = [:]) {
     log(level: 'INFO', text: "DRY-RUN: createPullRequest(repo: ${args.stackVersion}, labels: ${args.labels}, message: '${args.message}')")
     return
   }
-  githubCreatePullRequest(title: "${args.title} '${args.stackVersion}'", labels: "${args.labels}", description: "${args.message}")
+  githubCreatePullRequest(title: "${args.title} ${args.stackVersion}", labels: "${args.labels}", description: "${args.message}")
 }
 
 def prepareContext(Map args = [:]) {
