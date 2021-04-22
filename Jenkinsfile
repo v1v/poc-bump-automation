@@ -30,7 +30,6 @@ pipeline {
     stage('Checkout') {
       steps {
         git(credentialsId: '2a9602aa-ab9f-4e52-baf3-b71ca88469c7-UserAndToken', url: "https://github.com/v1v/${REPO}.git")
-        echo 'skipped'
       }
     }
     stage('Fetch latest versions') {
@@ -107,6 +106,10 @@ def reusePullRequest(Map args = [:]) {
   if (args.reusePullRequest && reusePullRequestIfPossible(title: args.title, labels: args.labels)) {
     try {
       sh(script: "${args.scriptFile} '${args.stackVersion}' 'false'", label: "Prepare changes for ${args.repo}")
+      if (params.DRY_RUN_MODE) {
+        log(level: 'INFO', text: "DRY-RUN: reusePullRequest(repo: ${args.stackVersion}, labels: ${args.labels}, message: '${args.message}')")
+        return true
+      }
       gitPush()
       return true
     } catch(err) {
@@ -119,6 +122,10 @@ def reusePullRequest(Map args = [:]) {
 def createPullRequest(Map args = [:]) {
   prepareContext(repo: args.repo, branchName: args.branchName)
   sh(script: "${args.scriptFile} '${args.stackVersion}' 'true'", label: "Prepare changes for ${args.repo}")
+  if (params.DRY_RUN_MODE) {
+    log(level: 'INFO', text: "DRY-RUN: createPullRequest(repo: ${args.stackVersion}, labels: ${args.labels}, message: '${args.message}')")
+    return
+  }
   githubCreatePullRequest(title: "${args.title} '${args.stackVersion}'", labels: "${args.labels}", description: "${args.message}")
 }
 
@@ -154,12 +161,14 @@ def findBranchName(Map args = [:]){
 }
 
 def createPRDescription(versionEntry) {
+  def content
+  versionEntry.each{k,v -> content += "${k} : ${v}"}
   return """
   ### What
   Bump stack version with the latest one.
   ### Further details
   ```
-  ${versionEntry}
+  ${content}
   ```
   """
 }
