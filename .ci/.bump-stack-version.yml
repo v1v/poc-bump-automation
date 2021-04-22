@@ -1,0 +1,8 @@
+projects:
+  - repo: "poc-bump-automation"
+    script: ".ci/bump-stack-version.sh"
+    branches:
+      - master
+    enabled: true
+    reusePullRequest: true
+    labels: dependency
