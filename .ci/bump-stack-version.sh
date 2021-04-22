@@ -11,7 +11,7 @@
 #		  this is required when reusing an existing Pull Request.
 #		  Optional. Default true.
 #
-set -euo pipefail
+set -exuo pipefail
 MSG="parameter missing."
 VERSION=${1:?$MSG}
 CREATE_BRANCH=${2:-true}
