@@ -9,6 +9,7 @@ pipeline {
   agent { label 'linux && immutable' }
   environment {
     REPO = 'poc-bump-automation'
+    ORG_NAME = 'v1v'
     HOME = "${env.WORKSPACE}"
     NOTIFY_TO = credentials('notify-to')
     PIPELINE_LOG_LEVEL='DEBUG'
@@ -30,7 +31,7 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        git(credentialsId: '2a9602aa-ab9f-4e52-baf3-b71ca88469c7-UserAndToken', url: "https://github.com/v1v/${REPO}.git")
+        git(credentialsId: '2a9602aa-ab9f-4e52-baf3-b71ca88469c7-UserAndToken', url: "https://github.com/${ORG_NAME}/${REPO}.git")
       }
     }
     stage('Fetch latest versions') {
@@ -104,14 +105,16 @@ def prepareArguments(Map args = [:]){
 
 def reusePullRequest(Map args = [:]) {
   prepareContext(repo: args.repo, branchName: args.branchName)
-  if (args.reusePullRequest && reusePullRequestIfPossible(title: args.title, labels: args.labels)) {
+  if (args.reusePullRequest && reusePullRequestIfPossible(title: args.title, labels: args.labels, message: args.message)) {
     try {
       sh(script: "${args.scriptFile} '${args.stackVersion}' 'false'", label: "Prepare changes for ${args.repo}")
       if (params.DRY_RUN_MODE) {
         log(level: 'INFO', text: "DRY-RUN: reusePullRequest(repo: ${args.stackVersion}, labels: ${args.labels}, message: '${args.message}')")
         return true
       }
-      gitPush()
+      withEnv(["REPO_NAME=${args.repo}"]){
+        gitPush()
+      }
       return true
     } catch(err) {
       log(level: 'INFO', text: "Could not reuse an existing GitHub Pull Request. So fallback to create a new one instead. ${err.toString()}")
@@ -133,7 +136,7 @@ def createPullRequest(Map args = [:]) {
 def prepareContext(Map args = [:]) {
   deleteDir()
   setupAPMGitEmail(global: true)
-  git(url: "https://github.com/v1v/${args.repo}.git",
+  git(url: "https://github.com/${ORG_NAME}/${args.repo}.git",
       branch: args.branchName,
       credentialsId: '2a9602aa-ab9f-4e52-baf3-b71ca88469c7-UserAndToken')
 }
@@ -142,8 +145,11 @@ def reusePullRequestIfPossible(Map args = [:]){
   def title = args.title
   def pullRequests = githubPullRequests(labels: args.labels.split(','), titleContains: args.title)
   if (pullRequests && pullRequests.size() == 1) {
-    log(level: 'INFO', text: "Reuse #${k} GitHub Pull Request.")
-    pullRequests?.each { k, v -> gh(command: "pr checkout ${k}") }
+    pullRequests?.each { k, v ->
+      log(level: 'INFO', text: "Reuse #${k} GitHub Pull Request.")
+      gh(command: "pr checkout ${k}")
+      gh(command: "pr edit ${k}", flags: [body: "${args.title}" , title: "${args.message}"])
+    }
     return true
   }
   log(level: 'INFO', text: 'Could not find a GitHub Pull Request. So fallback to create a new one instead.')
