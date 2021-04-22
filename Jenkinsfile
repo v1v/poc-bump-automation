@@ -105,7 +105,7 @@ def prepareArguments(Map args = [:]){
 
 def reusePullRequest(Map args = [:]) {
   prepareContext(repo: args.repo, branchName: args.branchName)
-  if (args.reusePullRequest && reusePullRequestIfPossible(title: args.title, labels: args.labels, message: args.message)) {
+  if (args.reusePullRequest && reusePullRequestIfPossible(title: "${args.title} ${args.stackVersion}", labels: args.labels, message: args.message)) {
     try {
       sh(script: "${args.scriptFile} '${args.stackVersion}' 'false'", label: "Prepare changes for ${args.repo}")
       if (params.DRY_RUN_MODE) {
