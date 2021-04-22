@@ -105,7 +105,7 @@ def prepareArguments(Map args = [:]){
 
 def reusePullRequest(Map args = [:]) {
   prepareContext(repo: args.repo, branchName: args.branchName)
-  if (args.reusePullRequest && reusePullRequestIfPossible(title: args.title, labels: args.labels)) {
+  if (args.reusePullRequest && reusePullRequestIfPossible(title: args.title, labels: args.labels, message: args.message)) {
     try {
       sh(script: "${args.scriptFile} '${args.stackVersion}' 'false'", label: "Prepare changes for ${args.repo}")
       if (params.DRY_RUN_MODE) {
@@ -145,8 +145,11 @@ def reusePullRequestIfPossible(Map args = [:]){
   def title = args.title
   def pullRequests = githubPullRequests(labels: args.labels.split(','), titleContains: args.title)
   if (pullRequests && pullRequests.size() == 1) {
-    log(level: 'INFO', text: "Reuse GitHub Pull Request.")
-    pullRequests?.each { k, v -> gh(command: "pr checkout ${k}") }
+    pullRequests?.each { k, v ->
+      log(level: 'INFO', text: "Reuse #${k} GitHub Pull Request.")
+      gh(command: "pr checkout ${k}")
+      gh(command: "pr edit ${k}", flags: [body: "${args.title}" , title: "${args.message}"])
+    }
     return true
   }
   log(level: 'INFO', text: 'Could not find a GitHub Pull Request. So fallback to create a new one instead.')
