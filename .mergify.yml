@@ -8,3 +8,10 @@ pull_request_rules:
       merge:
         method: squash
         strict: smart+fasttrack
+  - name: remove-backport label
+    conditions:
+      - label~=^backport-7
+    actions:
+      label:
+        remove:
+          - backport-skip
